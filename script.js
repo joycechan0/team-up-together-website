@@ -119,14 +119,64 @@
     });
   }
 
-  /* ---------- Donation amount chips ---------- */
-  var chips = document.querySelectorAll(".donate-amounts .chip");
-  chips.forEach(function (chip) {
-    chip.addEventListener("click", function () {
-      chips.forEach(function (c) { c.classList.remove("chip-active"); });
-      chip.classList.add("chip-active");
+  /* ---------- Project detail modal ---------- */
+  var modal = document.getElementById("projectModal");
+  var projectCards = document.querySelectorAll(".project-card");
+  var lastFocused = null;
+
+  function openProject(card) {
+    if (!modal) return;
+    var photoClass = card.getAttribute("data-photo") || "";
+    var story = card.querySelector(".project-story");
+
+    var modalPhoto = document.getElementById("modalPhoto");
+    modalPhoto.className = "modal-photo " + photoClass;
+    modalPhoto.textContent = card.getAttribute("data-emoji") || "";
+    document.getElementById("modalCause").innerHTML = card.getAttribute("data-cause") || "";
+    document.getElementById("modalTitle").innerHTML = card.getAttribute("data-title") || "";
+    document.getElementById("modalMeta").textContent = card.getAttribute("data-meta") || "";
+    document.getElementById("modalStory").innerHTML = story ? story.innerHTML : "";
+
+    // Hide "Start a project like this" for projects that are already running
+    var startBtn = document.getElementById("modalStartBtn");
+    if (startBtn) startBtn.style.display = card.hasAttribute("data-started") ? "none" : "";
+
+    lastFocused = card;
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    var closeBtn = document.getElementById("modalClose");
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeProject() {
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (lastFocused) lastFocused.focus();
+  }
+
+  projectCards.forEach(function (card) {
+    card.addEventListener("click", function () { openProject(card); });
+    card.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openProject(card);
+      }
     });
   });
+
+  if (modal) {
+    modal.addEventListener("click", function (e) {
+      if (e.target.hasAttribute("data-close") || e.target.closest("[data-close]")) {
+        closeProject();
+      }
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && modal.classList.contains("open")) closeProject();
+    });
+  }
 
   /* ---------- Form validation + feedback ---------- */
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -181,9 +231,14 @@
   }
 
   handleForm(
+    "startForm",
+    "startStatus",
+    "Love it! A coordinator will reach out within 3 days to help bring your idea to life. 💡"
+  );
+  handleForm(
     "volunteerForm",
     "volunteerStatus",
-    "Thank you for signing up! We'll be in touch with your local team soon. 🎉"
+    "Thank you for signing up! We'll match you with a project and team soon. 🎉"
   );
   handleForm(
     "contactForm",
